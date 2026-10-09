@@ -981,23 +981,17 @@ func getMediaTypeFromMessage(msg *waE2E.Message) string {
 }
 
 func getButtonTypeFromMessage(msg *waE2E.Message) string {
+	msg = interactivePayload(msg)
+	if msg == nil || isInteractiveResponse(msg) {
+		return ""
+	}
 	switch {
-	case msg.ViewOnceMessage != nil:
-		return getButtonTypeFromMessage(msg.ViewOnceMessage.Message)
-	case msg.ViewOnceMessageV2 != nil:
-		return getButtonTypeFromMessage(msg.ViewOnceMessageV2.Message)
-	case msg.EphemeralMessage != nil:
-		return getButtonTypeFromMessage(msg.EphemeralMessage.Message)
 	case msg.ButtonsMessage != nil:
 		return "buttons"
-	case msg.ButtonsResponseMessage != nil:
-		return "buttons_response"
 	case msg.ListMessage != nil:
 		return "list"
-	case msg.ListResponseMessage != nil:
-		return "list_response"
-	case msg.InteractiveResponseMessage != nil:
-		return "interactive_response"
+	case msg.InteractiveMessage != nil && msg.InteractiveMessage.GetNativeFlowMessage() != nil:
+		return "native_flow"
 	default:
 		return ""
 	}
@@ -1137,19 +1131,7 @@ func (cli *Client) getMessageContent(
 	if extraParams.metaNode != nil {
 		content = append(content, *extraParams.metaNode)
 	}
-	if extraParams.additionalNodes != nil {
-		content = append(content, *extraParams.additionalNodes...)
-	}
-
-	if buttonType := getButtonTypeFromMessage(message); buttonType != "" {
-		content = append(content, waBinary.Node{
-			Tag: "biz",
-			Content: []waBinary.Node{{
-				Tag:   buttonType,
-				Attrs: getButtonAttributes(message),
-			}},
-		})
-	}
+	content = appendInteractiveNodes(content, message, extraParams.additionalNodes)
 	return content
 }
 
