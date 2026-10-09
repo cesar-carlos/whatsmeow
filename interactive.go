@@ -86,7 +86,9 @@ func interactiveBizNode(msg *waE2E.Message) *waBinary.Node {
 	}
 	var prompt waBinary.Node
 	if kind == "list" {
-		prompt = waBinary.Node{Tag: "list", Attrs: waBinary.Attrs{"v": "2", "type": "product_list"}}
+		// The business node must describe the same list type as the encrypted
+		// payload. A single-select menu is not a product catalog.
+		prompt = waBinary.Node{Tag: "list", Attrs: getButtonAttributes(msg)}
 	} else {
 		prompt = waBinary.Node{Tag: "interactive", Attrs: waBinary.Attrs{"type": "native_flow", "v": "1"}, Content: []waBinary.Node{{Tag: "native_flow", Attrs: waBinary.Attrs{"v": "9", "name": "mixed"}}}}
 	}

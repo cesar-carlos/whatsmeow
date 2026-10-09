@@ -11,6 +11,14 @@ Group encryption, session schema and unrelated upstream changes are untouched.
 Observed node attributes are experimental protocol compatibility, not an official
 specification. Unit tests do not prove rendering on WhatsApp devices.
 
+Follow-up: list business-node attributes now preserve the protobuf list type
+(`single_select` or `product_list`), rather than advertising every menu as a
+product catalog. Attribute lookup shares the bounded, nil-safe unwrapping path.
+Regression tests exercise all supported wrappers, empty/cyclic/deep envelopes,
+selection IDs/context, response formats and duplicate explicit business nodes.
+This checks internal consistency; device/server acceptance still needs Android,
+iOS and Web validation, including real row selection and received response IDs.
+
 Run `go build ./...`, `go vet ./...`, `go test -timeout 5m ./...` and
 `go test -race -timeout 5m ./...`. Keep application references pinned to a full
 immutable commit/pseudo-version. On future upstream updates, retain regression

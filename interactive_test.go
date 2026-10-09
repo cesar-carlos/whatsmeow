@@ -71,8 +71,8 @@ func TestInteractivePayloadAndFlow(t *testing.T) {
 	list := &waE2E.Message{ListMessage: &waE2E.ListMessage{ListType: waE2E.ListMessage_SINGLE_SELECT.Enum()}}
 	node := interactiveBizNode(list)
 	children := node.Content.([]waBinary.Node)
-	if children[0].Attrs["type"] != "product_list" {
-		t.Fatal("list rendering node missing")
+	if children[0].Attrs["type"] != "single_select" {
+		t.Fatal("single-select menu advertised as a different list type")
 	}
 	for _, name := range []string{"payment_info", "review_and_pay", "cta_url", "quick_reply"} {
 		t.Run(name, func(t *testing.T) {

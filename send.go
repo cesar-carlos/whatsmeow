@@ -998,13 +998,11 @@ func getButtonTypeFromMessage(msg *waE2E.Message) string {
 }
 
 func getButtonAttributes(msg *waE2E.Message) waBinary.Attrs {
+	msg = interactivePayload(msg)
+	if msg == nil {
+		return waBinary.Attrs{}
+	}
 	switch {
-	case msg.ViewOnceMessage != nil:
-		return getButtonAttributes(msg.ViewOnceMessage.Message)
-	case msg.ViewOnceMessageV2 != nil:
-		return getButtonAttributes(msg.ViewOnceMessageV2.Message)
-	case msg.EphemeralMessage != nil:
-		return getButtonAttributes(msg.EphemeralMessage.Message)
 	case msg.TemplateMessage != nil:
 		return waBinary.Attrs{}
 	case msg.ListMessage != nil:
