@@ -18,6 +18,7 @@ import (
 	armadillo "go.mau.fi/whatsmeow/proto"
 	"go.mau.fi/whatsmeow/proto/instamadilloTransportPayload"
 	"go.mau.fi/whatsmeow/proto/waArmadilloApplication"
+	"go.mau.fi/whatsmeow/proto/waCompanionReg"
 	"go.mau.fi/whatsmeow/proto/waConsumerApplication"
 	"go.mau.fi/whatsmeow/proto/waE2E"
 	"go.mau.fi/whatsmeow/proto/waHistorySync"
@@ -40,6 +41,11 @@ type QR struct {
 	Codes []string
 }
 
+type RotateADVSecret struct {
+	OldSecret string
+	NewSecret string
+}
+
 // PairSuccess is emitted after the QR code has been scanned with the phone and the handshake has
 // been completed. Note that this is generally followed by a websocket reconnection, so you should
 // wait for the Connected before trying to send anything.
@@ -48,6 +54,7 @@ type PairSuccess struct {
 	LID          types.JID
 	BusinessName string
 	Platform     string
+	Props        *waCompanionReg.ClientPairingProps
 }
 
 // PairError is emitted when a pair-success event is received from the server, but finishing the pairing locally fails.
@@ -56,6 +63,7 @@ type PairError struct {
 	LID          types.JID
 	BusinessName string
 	Platform     string
+	Props        *waCompanionReg.ClientPairingProps
 	Error        error
 }
 
@@ -266,6 +274,8 @@ type Disconnected struct{}
 // HistorySync is emitted when the phone has sent a blob of historical messages.
 type HistorySync struct {
 	Data *waHistorySync.HistorySync
+
+	Notification *waE2E.HistorySyncNotification
 }
 
 type DecryptFailMode string
@@ -646,6 +656,15 @@ type NewsletterMuteChange struct {
 	Mute types.NewsletterMuteState `json:"mute"`
 }
 
+type NewsletterMilestone struct {
+	Mex             MexNotificationData   `json:"-"`
+	ID              types.JID             `json:"newsletter_id"`
+	MessageServerID types.MessageServerID `json:"message_server_id,string"`
+	Type            string                `json:"type"`
+	Value           int                   `json:"value"`
+	ReactionCode    string                `json:"reaction_code"`
+}
+
 type NewsletterLiveUpdate struct {
 	JID      types.JID
 	Time     time.Time
@@ -655,6 +674,6 @@ type NewsletterLiveUpdate struct {
 type NotifyAccountReachoutTimelock struct {
 	Mex                 MexNotificationData `json:"-"`
 	EnforcementType     string              `json:"enforcement_type,omitempty"`
-	IsActive            bool                `json:"is_active,omitempty"`
+	IsActive            bool                `json:"is_active,omitzero"`
 	TimeEnforcementEnds jsontime.UnixString `json:"time_enforcement_ends,omitzero"`
 }

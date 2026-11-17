@@ -2,6 +2,8 @@ package whatsmeow
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"testing"
 
 	waBinary "go.mau.fi/whatsmeow/binary"
@@ -11,10 +13,20 @@ import (
 	waLog "go.mau.fi/whatsmeow/util/log"
 )
 
+type statusAckLogger struct {
+	waLog.Logger
+	warnings []string
+}
+
+func (l *statusAckLogger) Warnf(format string, args ...any) {
+	l.warnings = append(l.warnings, fmt.Sprintf(format, args...))
+}
+
 func TestStatusNodeIsAcknowledgedWithoutBecomingAChat(t *testing.T) {
 	own := types.NewJID("5591888888888", types.DefaultUserServer)
 	own.Device = 38
-	cli := NewClient(&store.Device{ID: &own}, waLog.Noop)
+	log := &statusAckLogger{Logger: waLog.Noop}
+	cli := NewClient(&store.Device{ID: &own}, log)
 	cli.SynchronousAck = true
 	if cli.nodeHandlers["status"] == nil {
 		t.Fatal("status node has no handler")
@@ -29,7 +41,7 @@ func TestStatusNodeIsAcknowledgedWithoutBecomingAChat(t *testing.T) {
 
 	ctx := context.Background()
 	for _, messageType := range []string{"media", "text"} {
-		cli.handleUnencryptedMessage(ctx, &waBinary.Node{
+		cli.nodeHandlers["status"](ctx, &waBinary.Node{
 			Tag: "status",
 			Attrs: waBinary.Attrs{
 				"from":        types.StatusBroadcastJID,
@@ -39,6 +51,13 @@ func TestStatusNodeIsAcknowledgedWithoutBecomingAChat(t *testing.T) {
 				"t":           "1700000000",
 			},
 		})
+		// With no socket, an attempted ACK must report ErrNotConnected. This
+		// distinguishes acknowledgement from silently discarding the status.
+		want := "Failed to send acknowledgement for status STATUS" + messageType + ": " + ErrNotConnected.Error()
+		if len(log.warnings) != 1 || !strings.Contains(log.warnings[0], want) {
+			t.Fatalf("status %s did not attempt an ACK: %v", messageType, log.warnings)
+		}
+		log.warnings = nil
 	}
 	if len(got) != 0 {
 		t.Fatalf("user status became %d message events", len(got))
